@@ -200,6 +200,55 @@ output "public_ip" {
      * Security events
 
 
+-->Creating Dockerfile(by using some of the basic components)
+     FROM: python:3.8-slim (here i am taking some of the base images of python)
+     WORKDIR: /app
+     COPY: . /app
+     RUN: pip install --no-cache-dir -r requirements.txt(dependencies are in this txt file)
+     EXPOSE: 5050
+     CMD ["python", "app.py"]
 
-     
-By using above ansible-playbook we install apache server with the help of private id appdress connection in the nodes which what we mentioned in the GROUP1 Which is in the inventry file
+---> # creating docker image by using command
+        "docker build -t ."
+---> # sending that docker image to our registry
+---> we have to send that docker image to kubernetes for container orchestration purpose
+---> creating cluster setup by setting up EKS in cloud platforms like AWS or by command wise also
+---> one of the way to create cluster setup by using command
+        "eksctl create cluster --name <clustername> --region <region> --node-type <ex:t2 micro>"
+---> created cluster by using above command
+---> creating pods by manifest file
+ 
+deployment.yml
+    
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-microservice
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-microservice
+  template:
+    metadata:
+      labels:
+        app: my-microservice
+    spec:
+      containers:
+      - name: my-microservice
+        image: (mention path of our image in our registry)
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5050
+
+---> providing some of the basic manifest file
+---> then give command for applying deployment
+          "kubectl apply -f deployment.yml"
+---> we can deploy that deployment by using command
+          "kubectl expose deployment <deployment name> --port=<port number> --type=LoadBalancer
+
+
+
+
+
+          
