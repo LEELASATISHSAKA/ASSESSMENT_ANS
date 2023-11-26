@@ -112,6 +112,8 @@ output "public_ip" {
 }
 
 
+By using above ansible-playbook we install apache server with the help of private id appdress connection in the nodes which what we mentioned in the GROUP1 Which is in the inventry file
+
 
 ===============================================================================
 ===============================================================================
