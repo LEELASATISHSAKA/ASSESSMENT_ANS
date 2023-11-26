@@ -249,6 +249,23 @@ spec:
 
 
 
+We configure security by using different ways, some of them are as follows.
 
+--->To Git: [Version Control System]
+    * Firstly, Git is used for developing the code.
+    * we can send to various integration tools by pushing that code to github repositories
+    * Before performing the build process in jenkins pipeline, we can configure that code scanning analysis by using scanning tools like sonarqube
+    * Sonarqube will check security of the code whether there are any bugs, bugsmells, vulnerabilities in that code.
+    * likewise we are performing security to our version control system .
+
+-->Securing CI/CD pipelines:
+    * To enhance security, we implement artifact signing and verification. This ensures the integrity of our deployment artifacts by adding digital signatures, 
+      and during deployment, we verify these signatures to prevent the execution of compromised or tampered code.
+    * Additionally, we take extra care in managing secrets used in our CI/CD pipeline. Rather than hardcoding them into the code or configuration files, 
+      we utilize secure vaults or secret management tools to protect sensitive information and limit access to authorized personnel."
+
+-->Continuous Monitoring:  
+    * Implement continuous monitoring to detect and respond to security incidents in real-time.
+    * Utilize tools for log aggregation, anomaly detection, and intrusion detection to monitor system activities.
 
           
