@@ -134,3 +134,41 @@ output "public_ip" {
 
 
 ----> we see the public ip address, By using this public ip address we run the nginx web server with port 80 
+
+==============================================================================
+==============================================================================
+
+
+---
+- name: apache server installation process
+  hosts: GROUP1  
+  tasks:
+    - name: Install apache package
+      yum:
+        name: httpd
+        state: present
+    - name: start Apache package
+      service:
+        name: httpd
+        state: started
+    - name: add firewalls
+       ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+    - name: reload firewall config
+      systemd:
+        name: firewalld
+        state: reloaded
+    - name: copy indexfile to apache directory
+      copy:
+        src: /tmp/index.html
+        dest: /var/www/html
+    - name: Restart apache server
+      service:
+        name: httpd
+        state: restarted
+
+
+
+By using above ansible-playbook we install apache server with the help of private id appdress connection in the nodes which what we mentioned in the GROUP1 Which is in the inventry file
