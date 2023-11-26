@@ -1,0 +1,162 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = "AKIAW4R3L46LJD57VLQN"
+  secret_key = "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"
+}
+
+
+resource "aws_vpc" "asgvpc" {
+  cidr_block       = "99.0.0.0/16"
+  instance_tenancy = "default"
+
+  tags = {
+    Name = "asgvpc"
+  }
+}
+
+resource "aws_subnet" "asgpublicsubnet" {
+  vpc_id     = aws_vpc.asgvpc.id
+  cidr_block = "99.0.0.0/24"
+
+  tags = {
+    Name = "asgpublic_subnet"
+  }
+}
+
+resource "aws_internet_gateway" "asgigw" {
+  vpc_id = aws_vpc.asgvpc.id
+
+  tags = {
+    Name = "asgigw"
+  }
+}
+
+resource "aws_route_table" "asgrta" {
+  vpc_id = aws_vpc.asgvpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.asgigw.id
+  }
+}
+
+resource "aws_security_group" "asgsg" {
+  name        = "asgsg"
+  description = "Allow TLS inbound traffic"
+  vpc_id      = aws_vpc.asgvpc.id
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.asgvpc.cidr_block]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "asgsg"
+  }
+}
+
+
+
+# Create AWS nginxkey
+
+resource "aws_key_pair" "ASGkey" {
+  key_name   = "ASGkey"
+  public_key = file("ASGkey.pem.pub")
+}
+
+# Create AWS Instance
+resource "aws_instance" "ASGnginx" {
+  ami           = "ami-02a2af70a66af6dfb"
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.ASGkey.key_name  
+  subnet_id     = aws_subnet.asgpublicsubnet.id 
+  associate_public_ip_address = true
+  tags = {
+    Name = "ASGnginx_ins"
+  }
+
+  user_data = <<-EOF
+    #! /bin/sh
+    yum update -y
+    yum install docker -y
+    service docker start
+    docker pull nginx:alpine
+    docker run -it -d --name nginxcont -p 80:80 nginx:alpine
+ EOF
+}
+
+output "public_ip" {
+  value = aws_instance.ASGnginx.public_ip
+}
+
+
+
+===============================================================================
+===============================================================================
+
+
+    ***IN THE ABOVE CODE  I AM CREATING INSTANCE INSIDE VPC *** NGINX WEB SERVER ***
+
+--->  so vpc,internet gateway, route table,security group, subnet ,instance all these are created by terraform code(Above code represents all resources)
+    
+----> i am installing nginx and run the nginx by using docker commands and also these nginx web server is running with public ip address on port 80  
+
+---->  every INSTANCE must have keypair , name is ASGkey.pem
+
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
+NhAAAAAwEAAQAAAQEA0Vs6eAfLk4psoWJwia7m+/GD26hlViXTWdE5MrEoTTlziCeiS3Xi
+0wyiWry6k+G0ZaVd6smPmo3p3jDTwigm3WcY0KTb4TFh2DHdZ2XNkUou2BMe+jQm8kcggN
+0ZMOo2hL5+ucJnp5+h00qxwgVLX3IA81vRfyV/t4KcmorHyAMuQbOya5rZpPektU3/12dh
+lxEkN0xFbuRZusE3MGHUbRAn350dI6QAVXes/2pY0qMsy8zOus4vAU9JCJ18mAto0fVnMh
+UMlmKwiwOXjib0c4R+yAFI/PKi4mp/cYACJc1VtyPbXzcBCnlS6NoVbXeh3DIgDgi7bMro
+hJ7DBQZBjwAAA9gISd4xCEneMQAAAAdzc2gtcnNhAAABAQDRWzp4B8uTimyhYnCJrub78Y
+PbqGVWJdNZ0TkysShNOXOIJ6JLdeLTDKJavLqT4bRlpV3qyY+ajeneMNPCKCbdZxjQpNvh
+MWHYMd1nZc2RSi7YEx76NCbyRyCA3Rkw6jaEvn65wmenn6HTSrHCBUtfcgDzW9F/JX+3gp
+yaisfIAy5Bs7Jrmtmk96S1Tf/XZ2GXESQ3TEVu5Fm6wTcwYdRtECffnR0jpABVd6z/aljS
+oyzLzM66zi8BT0kInXyYC2jR9WcyFQyWYrCLA5eOJvRzhH7IAUj88qLian9xgAIlzVW3I9
+tfNwEKeVLo2hVtd6HcMiAOCLtsyuiEnsMFBkGPAAAAAwEAAQAAAQBPpxSHT3vybhOnkUL8
+92kViU2gOKEZljmj7hkDguiw/P9KWb4DVN5QavmoaS7ZjeGrXK/vYPG8nWrR6STgNZOX4B
+5OX7Lyqm2uKkaxDMgaE63f8uJx0n7Q5iPlM3nepPXKKoofleoHGhKhR8V66rXDIiZfcNsz
+s2o0wUJhABVDsNUmPAdrTQPNqCBMi8KIarI+fPMZTpvbTGygAvxBI2qyEOu+TqIxmSMdJQ
+MewbDzzJmnkstDoMX9snnAoiabAf8bSUrN5PtpTfnDXalzA0vueMRNhpvgvi2kH92I/fvE
+LSS0LX0VWKYOSf/RvQNgu34eBNAWhiuLbsHAk7mi4TK9AAAAgQCPMX/DHxdBnzVv8soblG
+N+Pbd5dm+qQ/UBZURy50mEnwBv3MLhLvZQWniP0XNLUgPqE6BRFWTR9i2w+2V/FE+NGxfn
+i3Zj0kfhIU2UqHB4jgeT/Yzctcvms40uudLjESKi4FtcKxhZzCvXomlpwpm03jR8nf2/yW
+7Pxm4YRH3kBwAAAIEA0n+RHJwBYrPWk+qLKe9RvMo5lHi5zGPpUISaPSrKea3tY4pco/2L
+3PXi/XFFmx7Kd7i9SiC8o0F1q+6AlQUYgNTo+3HTXKvcUNBn0on+ov4uOJ8os+0dO27Z+z
+iXSuL2n0e/ZAko7pGnifg8VfsrcWLGkt7ooz1muF6cghbn190AAACBAP6ceBoM425xvPqr
+lHQ8WlfSe1FRrJXCpw20NpcBsCP2bqA41EaH1j+IVs9AZOwiehkreH+qDG/YIwHTBVBd25
+AwLG/ywFtmtEbMIoT4Mvxvdlmko9uLrsFsGwU81LAIE7mUIWz+c0TTm+3FHKfhpLo9ldmb
+gAcVpN4eHnHA2T5bAAAAInJvb3RAaXAtMTcyLTMxLTM3LTEwMy5lYzIuaW50ZXJuYWw=
+-----END OPENSSH PRIVATE KEY-----
+
+----> After the successful execution by using terraform commands
+  
+   terraform init
+   terraform validate
+   terraform fmt
+   terraform apply
+
+
+
+----> we see the public ip address, By using this public ip address we run the nginx web server with port 80 
