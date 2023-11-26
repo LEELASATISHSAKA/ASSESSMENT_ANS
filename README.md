@@ -170,5 +170,36 @@ output "public_ip" {
         state: restarted
 
 
+===============================================================
+==============================================================
 
+
+
+--> Prometheus is data collection tool and Grafana is data visualisation tool.
+--> By default prometheus is running on port 9090
+--> By default Grafana is running on port 3000
+
+--> Key Metrics to Monitor:
+
+    Web Application Metrics:
+     * Request/response times
+     * Error rates
+     * Throughput (requests per second)
+     * Concurrent connections
+    System Metrics:
+     * CPU and memory usage
+     * Disk I/O and usage
+     * Network throughput
+    Container Metrics (if using containers):
+     * Container resource utilization (CPU, memory)
+     * Network statistics
+    Logs:
+     * Collect logs for application events, errors, and warnings.
+    Security Metrics (optional):
+     * Failed login attempts
+     * Security events
+
+
+
+     
 By using above ansible-playbook we install apache server with the help of private id appdress connection in the nodes which what we mentioned in the GROUP1 Which is in the inventry file
